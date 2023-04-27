@@ -137,7 +137,7 @@ resource "aws_security_group_rule" "isolation_segments_to_bosh_rule" {
   protocol                 = "tcp"
   to_port                  = element(var.iso_to_bosh_ports, count.index)
   from_port                = element(var.iso_to_bosh_ports, count.index)
-  source_security_group_id = aws_security_group.iso_security_group.id
+  source_security_group_id = aws_security_group.iso_security_group[0].id
 }
 
 resource "aws_security_group_rule" "isolation_segments_to_shared_tcp_rule" {
@@ -145,12 +145,12 @@ resource "aws_security_group_rule" "isolation_segments_to_shared_tcp_rule" {
 
   description = "TCP traffic from iso-sg to iso-shared-sg"
 
-  security_group_id        = aws_security_group.iso_shared_security_group.id
+  security_group_id        = aws_security_group.iso_shared_security_group[0].id
   type                     = "ingress"
   protocol                 = "tcp"
   to_port                  = element(var.iso_to_shared_tcp_ports, count.index)
   from_port                = element(var.iso_to_shared_tcp_ports, count.index)
-  source_security_group_id = aws_security_group.iso_security_group.id
+  source_security_group_id = aws_security_group.iso_security_group[0].id
 }
 
 resource "aws_security_group_rule" "isolation_segments_to_shared_udp_rule" {
@@ -158,12 +158,12 @@ resource "aws_security_group_rule" "isolation_segments_to_shared_udp_rule" {
 
   description = "UDP traffic from iso-sg to iso-shared-sg"
 
-  security_group_id        = aws_security_group.iso_shared_security_group.id
+  security_group_id        = aws_security_group.iso_shared_security_group[0].id
   type                     = "ingress"
   protocol                 = "udp"
   to_port                  = element(var.iso_to_shared_udp_ports, count.index)
   from_port                = element(var.iso_to_shared_udp_ports, count.index)
-  source_security_group_id = aws_security_group.iso_security_group.id
+  source_security_group_id = aws_security_group.iso_security_group[0].id
 }
 
 resource "aws_security_group_rule" "isolation_segments_to_bosh_all_traffic_rule" {
@@ -177,7 +177,7 @@ resource "aws_security_group_rule" "isolation_segments_to_bosh_all_traffic_rule"
   protocol                 = "-1"
   from_port                = 0
   to_port                  = 0
-  source_security_group_id = aws_security_group.iso_security_group.id
+  source_security_group_id = aws_security_group.iso_security_group[0].id
 }
 
 resource "aws_security_group_rule" "shared_diego_bbs_to_isolated_cells_rule" {
@@ -186,12 +186,12 @@ resource "aws_security_group_rule" "shared_diego_bbs_to_isolated_cells_rule" {
   description = "TCP traffic from shared diego bbs to iso-sg"
 
   depends_on               = [aws_security_group.iso_security_group]
-  security_group_id        = aws_security_group.iso_security_group.id
+  security_group_id        = aws_security_group.iso_security_group[0].id
   type                     = "ingress"
   protocol                 = "tcp"
   from_port                = 1801
   to_port                  = 1801
-  source_security_group_id = aws_security_group.iso_shared_security_group.id
+  source_security_group_id = aws_security_group.iso_shared_security_group[0].id
 }
 
 resource "aws_security_group_rule" "nat_to_isolated_cells_rule" {
@@ -204,15 +204,15 @@ resource "aws_security_group_rule" "nat_to_isolated_cells_rule" {
   protocol                 = "-1"
   from_port                = 0
   to_port                  = 0
-  source_security_group_id = aws_security_group.iso_security_group.id
+  source_security_group_id = aws_security_group.iso_security_group[0].id
 }
 
 output "cf_iso_router_lb_name" {
-  value = element(concat(aws_elb.iso_router_lb.*.name, list("")), 0)
+  value = var.isolation_segments == 1 ? aws_elb.iso_router_lb[0].name : ""
 }
 
 output "iso_security_group_id" {
-  value = element(concat(aws_security_group.iso_security_group.*.id, list("")), 0)
+  value = var.isolation_segments == 1 ? aws_security_group.iso_security_group[0].id : ""
 }
 
 output "iso_az_subnet_id_mapping" {
@@ -224,5 +224,5 @@ output "iso_az_subnet_cidr_mapping" {
 }
 
 output "iso_shared_security_group_id" {
-  value = element(concat(aws_security_group.iso_shared_security_group.*.id, list("")), 0)
+  value = var.isolation_segments == 1 ? aws_security_group.iso_shared_security_group[0].id : ""
 }
